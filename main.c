@@ -1154,7 +1154,27 @@ void initSource() {
     }
     
     /* TODO: Initialize geometrical data of the source */
-    
+	 /* Get beamlets file path from input data */
+	 char beamlets_file[128];
+	 
+	 /* First check of beamlets file was given as an input */
+	 if (getInputValue(buffer, "beamlets file") != 1) {
+		 printf("Can not find 'beamlets file' key on input file.\n");
+		 printf("Aborting...\n");
+		 abort();
+	 }
+	 
+	 /* Open .source file */
+	 FILE *fp;
+	 
+	 if ((fp = fopen(spectrum_file, "r")) == NULL) {
+		 printf("Unable to open file: %s\n", spectrum_file);
+		 exit(EXIT_FAILURE);
+	 }
+	 
+	 
+	 
+	 fclose(fp);    
     
     return;
 }

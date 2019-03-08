@@ -15,11 +15,14 @@ rng seeds = 97 33
 # start geometry
 method of input = phantom
 phantom file = ./phantoms/TG119.egsphant
+beamlets file = ./beamlets/
 # stop geometry         
                               
 # start MC transport
+data folder = ./data/
 photon xsection = ./data/xcom
 pegs file = ./pegs4/700icru.pegs4dat
+pgs4form file = ./pegs4/pgs4form.dat
 global ecut = 0.700
 global pcut = 0.010         
 # stop MC transport
