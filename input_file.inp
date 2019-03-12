@@ -15,7 +15,7 @@ rng seeds = 97 33
 # start geometry
 method of input = phantom
 phantom file = ./phantoms/TG119.egsphant
-beamlets file = ./beamlets/
+beamlets file = ./beamlets/TG119.beamlet
 # stop geometry         
                               
 # start MC transport
