@@ -7,7 +7,7 @@ ssd = 90.0
 # end source definition
                               
 # start MC control          
-ncase  = 1000000
+ncase  = 100000
 nbatch = 10
 rng seeds = 97 33
 # stop MC control           
@@ -26,3 +26,7 @@ pgs4form file = ./pegs4/pgs4form.dat
 global ecut = 0.700
 global pcut = 0.010         
 # stop MC transport
+
+# start other files def
+output folder = ./
+# stop

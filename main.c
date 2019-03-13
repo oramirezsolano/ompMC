@@ -706,34 +706,44 @@ int main (int argc, char **argv) {
     /* Execution time up to this point */
     printf("Execution time up to this point : %8.5f seconds\n",
            (double)(clock() - tbegin)/CLOCKS_PER_SEC);
-    
-    for (int ibatch=0; ibatch<nbatch; ibatch++) {
-        if (ibatch == 0) {
-            /* Print header for information during simulation */
-            printf("%-10s\t%-15s\t%-10s\n", "Batch #", "Elapsed time",
-                   "RNG state");
-            printf("%-10d\t%-15.5f\t%-5d%-5d\n", ibatch,
-                   (double)(clock() - tbegin)/CLOCKS_PER_SEC, rng.ixx, rng.jxx);
-        }
-        else {
-            /* Print state of current batch */
-            printf("%-10d\t%-15.5f\t%-5d%-5d\n", ibatch,
-                   (double)(clock() - tbegin)/CLOCKS_PER_SEC, rng.ixx, rng.jxx);
-            
-        }
-        int ihist;
-        #pragma omp parallel for schedule(dynamic)
-        for (ihist=0; ihist<nperbatch; ihist++) {
-            /* Initialize particle history */
-            initHistory(ihist);
-            
-            /* Start electromagnetic shower simulation */
-            shower();
-        }
+   
+	double count;
+	for (int i=0; i<source.nbeamlets; i++) {
+		count = i+1;
+		printf("\rIn progress %lf%% Beamlet number = %d", count/source.nbeamlets*100, i+1);
+		fflush(stdout);
+		
+		for (int ibatch=0; ibatch<nbatch; ibatch++) {
+// 			if (ibatch == 0) {
+// 					/* Print header for information during simulation */
+// 					printf("%-10s\t%-15s\t%-10s\n", "Batch #", "Elapsed time",
+// 							"RNG state");
+// 					printf("%-10d\t%-15.5f\t%-5d%-5d\n", ibatch,
+// 							(double)(clock() - tbegin)/CLOCKS_PER_SEC, rng.ixx, rng.jxx);
+// 			}
+// 			else {
+// 					/* Print state of current batch */
+// 					printf("%-10d\t%-15.5f\t%-5d%-5d\n", ibatch,
+// 							(double)(clock() - tbegin)/CLOCKS_PER_SEC, rng.ixx, rng.jxx);
+// 					
+// 			}
+			int ihist;
+			#pragma omp parallel for schedule(dynamic)
+			for (ihist=0; ihist<nperbatch; ihist++) {
+					/* Initialize particle history */
+					int ibeamlet = floor(source.nbeamlets*setRandom());
+// 					printf("%d\n", ibeamlet);
+					initHistory(ibeamlet);
+					
+					/* Start electromagnetic shower simulation */
+					shower();
+			}
         
         /* Accumulate results of current batch for statistical analysis */
         accumEndep();
-    }
+		}
+	}
+	printf("\n");
     
     /* Print some output and execution time up to this point */
     printf("Simulation finished\n");
@@ -1218,8 +1228,7 @@ void initSource() {
 }
 
 void cleanSource() {
-    
-    printf("Cleaaaaaan");
+	
     free(source.cdfinv1);
     free(source.cdfinv2);
     free(source.xsource);
