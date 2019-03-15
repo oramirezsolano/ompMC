@@ -708,11 +708,7 @@ int main (int argc, char **argv) {
            (double)(clock() - tbegin)/CLOCKS_PER_SEC);
    
 	double count;
-	for (int i=0; i<source.nbeamlets; i++) {
-		count = i+1;
-		printf("\rIn progress %lf%% Beamlet number = %d", count/source.nbeamlets*100, i+1);
-		fflush(stdout);
-		
+	for (int ibeamlet=0; ibeamlet<source.nbeamlets; ibeamlet++) {		
 		for (int ibatch=0; ibatch<nbatch; ibatch++) {
 // 			if (ibatch == 0) {
 // 					/* Print header for information during simulation */
@@ -731,7 +727,7 @@ int main (int argc, char **argv) {
 			#pragma omp parallel for schedule(dynamic)
 			for (ihist=0; ihist<nperbatch; ihist++) {
 					/* Initialize particle history */
-					int ibeamlet = floor(source.nbeamlets*setRandom());
+					
 // 					printf("%d\n", ibeamlet);
 					initHistory(ibeamlet);
 					
@@ -742,6 +738,10 @@ int main (int argc, char **argv) {
         /* Accumulate results of current batch for statistical analysis */
         accumEndep();
 		}
+		
+		count = ibeamlet+1;
+		printf("\rIn progress %.2lf%%", count/source.nbeamlets*100);
+		fflush(stdout);
 	}
 	printf("\n");
     
