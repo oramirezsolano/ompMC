@@ -7,15 +7,15 @@ ssd = 90.0
 # end source definition
                               
 # start MC control          
-ncase  = 5000
+ncase  = 10000
 nbatch = 10
 rng seeds = 97 33
 # stop MC control           
                               
 # start geometry
 method of input = phantom
-phantom file = ./phantoms/TG119.egsphant
-beamlets file = ./beamlets/TG119.beamlet
+phantom file = ./phantoms/PROSTATE.egsphant
+beamlets file = ./beamlets/PROSTATE.beamlet
 # stop geometry         
                               
 # start MC transport
