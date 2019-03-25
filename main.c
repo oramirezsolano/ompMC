@@ -707,43 +707,30 @@ int main (int argc, char **argv) {
     printf("Execution time up to this point : %8.5f seconds\n",
            (double)(clock() - tbegin)/CLOCKS_PER_SEC);
    
-	double count;
-	for (int ibeamlet=0; ibeamlet<source.nbeamlets; ibeamlet++) {		
-		for (int ibatch=0; ibatch<nbatch; ibatch++) {
-// 			if (ibatch == 0) {
-// 					/* Print header for information during simulation */
-// 					printf("%-10s\t%-15s\t%-10s\n", "Batch #", "Elapsed time",
-// 							"RNG state");
-// 					printf("%-10d\t%-15.5f\t%-5d%-5d\n", ibatch,
-// 							(double)(clock() - tbegin)/CLOCKS_PER_SEC, rng.ixx, rng.jxx);
-// 			}
-// 			else {
-// 					/* Print state of current batch */
-// 					printf("%-10d\t%-15.5f\t%-5d%-5d\n", ibatch,
-// 							(double)(clock() - tbegin)/CLOCKS_PER_SEC, rng.ixx, rng.jxx);
-// 					
-// 			}
-			int ihist;
-			#pragma omp parallel for schedule(dynamic)
-			for (ihist=0; ihist<nperbatch; ihist++) {
-					/* Initialize particle history */
-					
-// 					printf("%d\n", ibeamlet);
-					initHistory(ibeamlet);
-					
-					/* Start electromagnetic shower simulation */
-					shower();
-			}
-        
+    double count;
+    
+    /* Calculate the MC simulation for each beamlet */
+    for (int ibeamlet=0; ibeamlet<source.nbeamlets; ibeamlet++) {		
+        for (int ibatch=0; ibatch<nbatch; ibatch++) {
+            int ihist;
+            #pragma omp parallel for schedule(dynamic)
+            for (ihist=0; ihist<nperbatch; ihist++) {
+                /* Initialize particle history */
+                initHistory(ibeamlet);                
+                /* Start electromagnetic shower simulation */
+                shower();
+            }   
+
         /* Accumulate results of current batch for statistical analysis */
         accumEndep();
-		}
-		
-		count = ibeamlet+1;
-		printf("\rIn progress %.2lf%%", count/source.nbeamlets*100);
-		fflush(stdout);
-	}
-	printf("\n");
+        }
+
+        /* Status information of the MC simulation */
+        count = ibeamlet+1;
+        printf("\rIn progress %.2lf%%", count/source.nbeamlets*100);
+        fflush(stdout);
+    }
+    printf("\n");
     
     /* Print some output and execution time up to this point */
     printf("Simulation finished\n");
@@ -1163,67 +1150,66 @@ void initSource() {
         
     }
     
-    /* TODO: Initialize geometrical data of the source */
-	 /* Get beamlets file path from input data */
-	 char beamlets_file[128];
-     char bbuffer[1024];
-	 
-	 /* First check of beamlets file was given as an input */
-	 if (getInputValue(buffer, "beamlets file") != 1) {
-		 printf("Can not find 'beamlets file' key on input file.\n");
-		 printf("Aborting...\n");
-		 exit(EXIT_FAILURE);
-	 }
-	 
-	 /* Open .source file */
-     removeSpaces(beamlets_file, buffer);
-     
-	 FILE *fp;
-	 
-     if ((fp = fopen(beamlets_file, "r")) == NULL) {
-		 printf("Unable to open file: %s\n", beamlets_file);
-		 exit(EXIT_FAILURE);
-	 }
-	 
-	 printf("Path to beamlets file : %s\n", beamlets_file);
+    /* Initialize geometrical data of the source */
+    /* Get beamlets file path from input data */
+    char beamlets_file[128];
+    char temp[1024];
 
-     int nbeams;
-     
-     fgets(buffer, BUFFER_SIZE, fp);
-     sscanf(buffer, "%d %d", &nbeams, &source.nbeamlets);
-     printf("Number of beams = %d\nNumber of beamlets = %d\n", nbeams, source.nbeamlets);
-     
-     source.xsource = malloc(nbeams*sizeof(double));
-     source.ysource = malloc(nbeams*sizeof(double));
-     source.zsource = malloc(nbeams*sizeof(double));     
-     source.xcorner = malloc(source.nbeamlets*sizeof(double));
-     source.ycorner = malloc(source.nbeamlets*sizeof(double));
-     source.zcorner = malloc(source.nbeamlets*sizeof(double));     
-     source.xside1 = malloc(source.nbeamlets*sizeof(double));
-     source.yside1 = malloc(source.nbeamlets*sizeof(double));
-     source.zside1 = malloc(source.nbeamlets*sizeof(double));     
-     source.xside2 = malloc(source.nbeamlets*sizeof(double));
-     source.yside2 = malloc(source.nbeamlets*sizeof(double));
-     source.zside2 = malloc(source.nbeamlets*sizeof(double));
-     source.ibeam = malloc(source.nbeamlets*sizeof(int));
-     
-     /* Read spectrum information */
-     for (int i=0; i<nbeams; i++) {
-         fgets(bbuffer, 1024, fp);
-         sscanf(bbuffer, "%lf %lf %lf", &source.xsource[i], &source.ysource[i], &source.zsource[i]);
-//          printf(bbuffer);
-//          printf("x: %lf y: %lf z: %lf\n", source.xsource[i], source.ysource[i], source.zsource[i]);
-     }
-     for (int i=0; i<source.nbeamlets; i++) {
-         fgets(bbuffer, 1024, fp);
-         sscanf(bbuffer, "%d %lf %lf %lf %lf %lf %lf %lf %lf %lf", &source.ibeam[i], &source.xcorner[i], &source.ycorner[i], &source.zcorner[i], &source.xside1[i], &source.yside1[i], &source.zside1[i], &source.xside2[i], &source.yside2[i], &source.zside2[i]);
-//          printf(bbuffer);
-//          printf("x: %lf y: %lf z: %lf\n", source.xsource[i], source.ysource[i], source.zsource[i]);
-//          printf("%d ", source.ibeam[i]);
-     }
-	 
-	 fclose(fp);    
-    
+    /* First check of beamlets file was given as an input */
+    if (getInputValue(buffer, "beamlets file") != 1) {
+        printf("Can not find 'beamlets file' key on input file.\n");
+        printf("Aborting...\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Open .beamlet file */
+    removeSpaces(beamlets_file, buffer);
+
+    FILE *fp;
+
+    if ((fp = fopen(beamlets_file, "r")) == NULL) {
+        printf("Unable to open file: %s\n", beamlets_file);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Path to beamlets file : %s\n", beamlets_file);
+
+    int nbeams;
+
+    fgets(buffer, BUFFER_SIZE, fp);
+    sscanf(buffer, "%d %d", &nbeams, &source.nbeamlets);
+    printf("Number of beams = %d\nNumber of beamlets = %d\n", nbeams, source.nbeamlets);
+
+    /* This arrays allow allocate the geometrical information */
+    /* of the beamlets */
+    source.xsource = malloc(nbeams*sizeof(double));
+    source.ysource = malloc(nbeams*sizeof(double));
+    source.zsource = malloc(nbeams*sizeof(double));     
+    source.xcorner = malloc(source.nbeamlets*sizeof(double));
+    source.ycorner = malloc(source.nbeamlets*sizeof(double));
+    source.zcorner = malloc(source.nbeamlets*sizeof(double));     
+    source.xside1 = malloc(source.nbeamlets*sizeof(double));
+    source.yside1 = malloc(source.nbeamlets*sizeof(double));
+    source.zside1 = malloc(source.nbeamlets*sizeof(double));     
+    source.xside2 = malloc(source.nbeamlets*sizeof(double));
+    source.yside2 = malloc(source.nbeamlets*sizeof(double));
+    source.zside2 = malloc(source.nbeamlets*sizeof(double));
+    source.ibeam = malloc(source.nbeamlets*sizeof(int));
+
+    /* Read geometrical information of the source */
+    for (int i=0; i<nbeams; i++) {
+        fgets(temp, 1024, fp);
+        sscanf(temp, "%lf %lf %lf", &source.xsource[i], &source.ysource[i], &source.zsource[i]);
+    }
+    /* Read geometrical information of the beamlets */
+    /* and the beam index for each beamlet */
+    for (int i=0; i<source.nbeamlets; i++) {
+        fgets(temp, 1024, fp);
+        sscanf(temp, "%d %lf %lf %lf %lf %lf %lf %lf %lf %lf", &source.ibeam[i], &source.xcorner[i], &source.ycorner[i], &source.zcorner[i], &source.xside1[i], &source.yside1[i], &source.zside1[i], &source.xside2[i], &source.yside2[i], &source.zside2[i]);
+    }
+
+    fclose(fp);    
+
     return;
 }
 
