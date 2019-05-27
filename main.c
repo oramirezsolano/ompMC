@@ -3766,6 +3766,7 @@ void photon() {
                 edep = eig;
                 ausgab(edep);
                 stack.np -= 1;
+                printf ("STACK: `%d'\n", stack.np);
                 return;
             }
             
@@ -3798,6 +3799,7 @@ void photon() {
                 /* Deposit energy on the spot */
                 ausgab(edep);
                 stack.np -= 1;
+                printf ("STACK2: `%d'\n", stack.np);
                 return;
             }
             
@@ -3968,6 +3970,7 @@ void photon_split() {
                     edep = eig;
                     ausgab(edep);
                     stack.np -= 1;
+                    printf ("STACK: `%d'\n", stack.np);
                     continue;
                 }
                 
@@ -4000,6 +4003,7 @@ void photon_split() {
                     /* Deposit energy on the spot */
                     ausgab(edep);
                     stack.np -= 1;
+                    printf ("STACK2: `%d'\n", stack.np);
                     continue;
                 }
                 
