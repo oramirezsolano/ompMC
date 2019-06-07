@@ -3897,7 +3897,7 @@ void photon_split() {
     double u_save, v_save, w_save;
 
     printf ("PHOTON SPLITTING SELECTED\n");
-    printf ("Splitting photon into: %d \n", n_split);
+    printf ("Splitting photon into: %d with a weight: %lf \n", n_split, wt_save);
 
     x_save = stack.x[np]; u_save = stack.u[np];
     y_save = stack.y[np]; v_save = stack.v[np];
@@ -3936,7 +3936,8 @@ void photon_split() {
             /* Deposit energy on the spot */
             ausgab(edep);
             stack.np -= 1;
-            return;
+            np = stack.np;
+            continue;
         }
 
         eta_split = eta_split - i_split;
@@ -4007,23 +4008,27 @@ void photon_split() {
                     gmfp *= cohfac;
                     tstep = gmfp*dpmfp;
                 }
-
+                
                 int irnew = irl;       // default new region number
                 int idisc = 0;          // assume photon is not discarded
                 double ustep = tstep;    // transfer transport distance to user variable
-                
+                // printf ("CHECKPOINT!\n");
                 if(ustep > stack.dnear[np] || stack.wt[np] <= 0) {
                     howfar(&idisc, &irnew, &ustep);
-                }            
-                
+                }
+                           
+                /***** AQUI ESTA EL PROBLEMA *****/
+                printf ("1 eig: %lf np: %d\n", eig, stack.np);
                 if (idisc > 0) {
                     /* User requested inmediate discard */
                     edep = eig;
+                    printf ("edep: %lf np: %d\n", edep, stack.np);
                     ausgab(edep);
                     stack.np -= 1;
                     np = stack.np;
-                    // printf ("STACK: `%d'\n", stack.np);
-                    continue;
+                    printf ("edep: %lf np: %d\n", edep, stack.np);
+                    printf ("CHECKPOINT!\n");
+                    break;
                 }
                 
                 /* Transport distance after truncation by howfar */
@@ -4057,7 +4062,7 @@ void photon_split() {
                     stack.np -= 1;
                     np = stack.np;
                     // printf ("STACK2: `%d'\n", stack.np);
-                    continue;
+                    break;
                 }
                 
                 if (imed != medold) {
@@ -4074,6 +4079,7 @@ void photon_split() {
         } while (pmedium); /* end of "new medium" loop */
         
         /* Time for an interaction. First check for Rayleigh scattering */
+        printf ("INTERACTION!\n");
         rnno = setRandom();
         if (rnno <= 1.0 - cohfac) {
             /* It was Rayleigh */
