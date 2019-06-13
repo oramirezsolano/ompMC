@@ -709,7 +709,7 @@ int main (int argc, char **argv) {
     /* Execution time up to this point */
     printf("Execution time up to this point : %8.5f seconds\n",
            (double)(clock() - tbegin)/CLOCKS_PER_SEC);
-    
+    if(n_split > 1) printf ("PHOTON SPLITTING SELECTED\n");
     for (int ibatch=0; ibatch<nbatch; ibatch++) {
         if (ibatch == 0) {
             /* Print header for information during simulation */
@@ -729,7 +729,7 @@ int main (int argc, char **argv) {
         for (ihist=0; ihist<nperbatch; ihist++) {
             /* Initialize particle history */
             initHistory();
-            
+            printf ("   History No.: %d \n", ihist);
             /* Start electromagnetic shower simulation */
             shower();
         }
@@ -1282,6 +1282,7 @@ void initRegions() {
     
     /* +1 : consider region surrounding phantom */
     int nreg = geometry.isize*geometry.jsize*geometry.ksize + 1;
+    printf ("NREG: %d \n", nreg);
     
     /* Allocate memory for region data */
     region.med = malloc(nreg*sizeof(int));
@@ -3896,7 +3897,6 @@ void photon_split() {
     double x_save, y_save, z_save;
     double u_save, v_save, w_save;
 
-    printf ("PHOTON SPLITTING SELECTED\n");
     printf ("Splitting photon into: %d with a weight: %lf \n", n_split, wt_save);
 
     x_save = stack.x[np]; u_save = stack.u[np];
@@ -3920,7 +3920,7 @@ void photon_split() {
     
     for (iphoton = 1; iphoton <= n_split; iphoton++) {
 
-        // printf ("simulating the %d-th photon!\n", iphoton);
+        printf ("simulating the %d-th photon!\n", iphoton);
 
         irl = irl_save;         // region index
         imed = imed_save;     // medium index of current region
@@ -3949,6 +3949,7 @@ void photon_split() {
         
         double dpmfp = -log(eta_split) - dpmfp_old;
         dpmfp_old = dpmfp_old + dpmfp;
+        printf("iphoton: %d dpmfp: %lf \n", iphoton, dpmfp);
 
         stack.np += 1;
         np = stack.np;
@@ -3958,12 +3959,12 @@ void photon_split() {
             EXIT_FAILURE;
         }
 
+        /* Initialize the splitting */ 
         stack.x[np] = x_save; stack.u[np] = u_save;
         stack.y[np] = y_save; stack.v[np] = v_save;
         stack.z[np] = z_save; stack.w[np] = w_save;
-
-        /* Modifying the photn weight */
-        stack.wt[np] = wt;
+        stack.ir[np] = irl_save;
+        stack.wt[np] = wt_save;        
         
         int lgle = 0;           // index for gamma MFP interpolation
         double gle = log(eig);  /* gle is gamma log energy, here to sample number
@@ -3986,14 +3987,14 @@ void photon_split() {
                                 photon_data.gmfp1, photon_data.gmfp0);
                 
             }
-            
+            printf ("np = %d\n", np);
             do {    /* start of "photon transport loop */
                 double tstep;       // distance to a discrete interaction
                 double gmfp = 0.0;  // photon MFP after density scaling
                 double rhof;        // mass density ratio
                 /***** PARA EL PRIMER FOTON FUNCIONA, PARA EL 2DO NO *****/
-                printf ("simulating the %d-th photon!\n", iphoton);
-                printf ("np = %d\n", np);
+                // printf ("simulating the %d-th photon!\n", iphoton);
+                // printf ("np = %d\n", np);
                 if (imed == -1) {
                     tstep = 10.0E8; // i.e. infinity
                 }
@@ -4012,22 +4013,22 @@ void photon_split() {
                 int irnew = irl;       // default new region number
                 int idisc = 0;          // assume photon is not discarded
                 double ustep = tstep;    // transfer transport distance to user variable
-                // printf ("CHECKPOINT!\n");
+                
                 if(ustep > stack.dnear[np] || stack.wt[np] <= 0) {
                     howfar(&idisc, &irnew, &ustep);
                 }
                            
                 /***** AQUI ESTA EL PROBLEMA *****/
-                printf ("1 eig: %lf np: %d\n", eig, stack.np);
+                // printf ("1 eig: %lf np: %d idisc: %d\n", eig, stack.np, idisc);
                 if (idisc > 0) {
                     /* User requested inmediate discard */
                     edep = eig;
-                    printf ("edep: %lf np: %d\n", edep, stack.np);
+                    // printf ("edep: %lf np: %d\n", edep, stack.np);
                     ausgab(edep);
                     stack.np -= 1;
                     np = stack.np;
-                    printf ("edep: %lf np: %d\n", edep, stack.np);
-                    printf ("CHECKPOINT!\n");
+                    // printf ("edep: %lf np: %d\n", edep, stack.np);
+                    // printf ("CHECKPOINT!\n");
                     break;
                 }
                 
@@ -4048,12 +4049,16 @@ void photon_split() {
                 int medold = imed;
                 
                 if (irnew != irold) {
-                    /* Region change */
+                    /* Region change */ 
+                    // printf ("irnew: %d np: %d imed: %d\n", irnew, stack.np, region.med[irl]);                   
                     stack.ir[np] = irnew;
                     irl = stack.ir[np];
+                    // printf ("irnew: %d stack: %d imed: %d\n", irnew, stack.np, region.med[irl]);
                     imed = region.med[irl];
+                    // printf ("irnew: %d np: %d imed: %d\n", irnew, stack.np, region.med[irl]);
+                    // printf ("CHECKPOINT!\n");
                 }
-
+                
                 if (eig <= region.pcut[irl]) {
                     edep = eig;
                     
@@ -4061,7 +4066,6 @@ void photon_split() {
                     ausgab(edep);
                     stack.np -= 1;
                     np = stack.np;
-                    // printf ("STACK2: `%d'\n", stack.np);
                     break;
                 }
                 
@@ -4077,6 +4081,11 @@ void photon_split() {
 
             } while (ptrans);   /* end of "photon transport loop */
         } while (pmedium); /* end of "new medium" loop */
+
+        x_save = stack.x[np];
+        y_save = stack.y[np];
+        z_save = stack.z[np];
+        irl_save = stack.ir[np];
         
         /* Time for an interaction. First check for Rayleigh scattering */
         printf ("INTERACTION!\n");
