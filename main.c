@@ -155,7 +155,7 @@ void outputResults(char *output_file, int iout, int nhist, int nbatch);
 
 /******************************************************************************/
 /* Stack definition */
-#define MXSTACK 10  // maximum number of particles on stack
+#define MXSTACK 1000  // maximum number of particles on stack
 
 struct Stack {
     int np;         // stack pointer
@@ -3889,7 +3889,8 @@ void photon_split() {
     double wt_save = stack.wt[stack.np]/(n_split + 0.0); // Particle weight
 
     int irl;         // region index
-    int imed;     // medium index of current region
+    int imed;
+    int idisc;     // medium index of current region
     double edep;              // deposited energy by particle
     double eig;       // energy of incident gamma
     double wt; // Particle weight
@@ -3956,7 +3957,7 @@ void photon_split() {
 
         if (np > MXSTACK) {
             printf ("Stack overflow. Aborting the simulation!\n");
-            EXIT_FAILURE;
+            exit(EXIT_FAILURE);
         }
 
         /* Initialize the splitting */ 
@@ -4011,7 +4012,7 @@ void photon_split() {
                 }
                 
                 int irnew = irl;       // default new region number
-                int idisc = 0;          // assume photon is not discarded
+                idisc = 0;          // assume photon is not discarded
                 double ustep = tstep;    // transfer transport distance to user variable
                 
                 if(ustep > stack.dnear[np] || stack.wt[np] <= 0) {
@@ -4027,6 +4028,7 @@ void photon_split() {
                     ausgab(edep);
                     stack.np -= 1;
                     np = stack.np;
+                    pmedium = 0;
                     // printf ("edep: %lf np: %d\n", edep, stack.np);
                     // printf ("CHECKPOINT!\n");
                     break;
@@ -4081,6 +4083,9 @@ void photon_split() {
 
             } while (ptrans);   /* end of "photon transport loop */
         } while (pmedium); /* end of "new medium" loop */
+
+        if(idisc)
+            continue;
 
         x_save = stack.x[np];
         y_save = stack.y[np];
