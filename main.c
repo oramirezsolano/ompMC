@@ -155,7 +155,7 @@ void outputResults(char *output_file, int iout, int nhist, int nbatch);
 
 /******************************************************************************/
 /* Stack definition */
-#define MXSTACK 1000  // maximum number of particles on stack
+#define MXSTACK 10000  // maximum number of particles on stack
 
 struct Stack {
     int np;         // stack pointer
@@ -1518,6 +1518,8 @@ void cleanRandom() {
 
 void shower() {
  
+    // double rr_rnno;
+
     if(n_split <= 1) {
         while (stack.np >= 0) {
             if (stack.iq[stack.np] == 0) {
@@ -1528,9 +1530,19 @@ void shower() {
         }
     }
     else {
+        // rr_rnno = setRandom();
+
         while (stack.np >= 0) {
-            if (stack.iq[stack.np] == 0) {
-                photon_split();
+            if (stack.iq[stack.np] == 0 ) { // && stack.wt[stack.np] > 10E-4) {
+                // if (rr_rnno <= (1.0/(n_split + 0.0))) {
+                    // stack.wt[stack.np] *= n_split;
+                if(stack.wt[stack.np] > 10E-4)
+                    photon_split(); 
+                else
+                    photon();
+                // } else {
+                    // stack.np -= 1;
+                // }                 
             } else {
                 electron();
             }
@@ -3906,6 +3918,8 @@ void photon_split() {
 
     /* Select photon mean free path */
     double rnno = setRandom();
+    double rr_rnno;
+
     if (rnno < 1.0E-30) {
         rnno = 1.0E-30;
     }
@@ -3920,6 +3934,12 @@ void photon_split() {
     np = stack.np;
     
     for (iphoton = 1; iphoton <= n_split; iphoton++) {
+
+        // if (rr_rnno <= (1.0/(n_split + 0.0))) {
+        //     stack.wt[stack.np] *= n_split;
+        // } else {
+        //     stack.np -= 1;
+        // }
 
         printf ("simulating the %d-th photon!\n", iphoton);
 
@@ -3965,7 +3985,8 @@ void photon_split() {
         stack.y[np] = y_save; stack.v[np] = v_save;
         stack.z[np] = z_save; stack.w[np] = w_save;
         stack.ir[np] = irl_save;
-        stack.wt[np] = wt_save;        
+        stack.wt[np] = wt_save; 
+        stack.e[np] = eig_save;       
         
         int lgle = 0;           // index for gamma MFP interpolation
         double gle = log(eig);  /* gle is gamma log energy, here to sample number
@@ -4029,6 +4050,7 @@ void photon_split() {
                     stack.np -= 1;
                     np = stack.np;
                     pmedium = 0;
+                    ptrans = 0;
                     // printf ("edep: %lf np: %d\n", edep, stack.np);
                     // printf ("CHECKPOINT!\n");
                     break;
@@ -4068,6 +4090,11 @@ void photon_split() {
                     ausgab(edep);
                     stack.np -= 1;
                     np = stack.np;
+
+                    pmedium = 0;
+                    ptrans = 0;
+                    idisc = 1;
+
                     break;
                 }
                 
@@ -4084,20 +4111,25 @@ void photon_split() {
             } while (ptrans);   /* end of "photon transport loop */
         } while (pmedium); /* end of "new medium" loop */
 
-        if(idisc)
-            continue;
+        // if(idisc)
+        //     continue;
 
         x_save = stack.x[np];
         y_save = stack.y[np];
         z_save = stack.z[np];
         irl_save = stack.ir[np];
+
+        if(idisc)
+            continue;
         
         /* Time for an interaction. First check for Rayleigh scattering */
-        printf ("INTERACTION!\n");
+        // printf ("INTERACTION!\n");
         rnno = setRandom();
         if (rnno <= 1.0 - cohfac) {
             /* It was Rayleigh */
+            printf ("RAYLEIGH!\n");
             rayleigh(imed, eig, gle, lgle);
+            printf ("Sale rayleigh!\n");
         }
         else {
             /* Other interactions */
@@ -4107,8 +4139,10 @@ void photon_split() {
             double gbr1 = pwlfEval(imed*MXGE + lgle, gle,
                                 photon_data.gbr11, photon_data.gbr10);
             if (rnno <= gbr1 && eig>2.0*RM) {
-                /* It was pair production */           
+                /* It was pair production */ 
+                printf ("PAIR!\n");          
                 pair(imed);
+                printf ("Sale pair!\n");
 
                 np = stack.np;                  
                 if (stack.iq[np] != 0) {
@@ -4122,8 +4156,10 @@ void photon_split() {
                                 photon_data.gbr21, photon_data.gbr20);
             
             if (rnno < gbr2) {
-                /* It was compton */            
-                compton();      
+                /* It was compton */   
+                printf ("COMPTON!\n");           
+                compton();  
+                printf ("Sale compton!\n");    
 
                 np = stack.np;            
                 if (stack.iq[np] != 0) {
@@ -4132,8 +4168,10 @@ void photon_split() {
                 }
             }
             else {
-                /* It was photoelectric */            
+                /* It was photoelectric */
+                printf ("PHOTOELECTRIC!\n");             
                 photo();
+                printf ("Sale photo!\n"); 
                 
                 if (stack.iq[np] != 0) {
                     /* Electron to be transported next */
