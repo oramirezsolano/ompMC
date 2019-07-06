@@ -729,7 +729,6 @@ int main (int argc, char **argv) {
         for (ihist=0; ihist<nperbatch; ihist++) {
             /* Initialize particle history */
             initHistory();
-            printf ("   History No.: %d \n", ihist);
             /* Start electromagnetic shower simulation */
             shower();
         }
@@ -1536,10 +1535,10 @@ void shower() {
             if (stack.iq[stack.np] == 0 ) { // && stack.wt[stack.np] > 10E-4) {
                 // if (rr_rnno <= (1.0/(n_split + 0.0))) {
                     // stack.wt[stack.np] *= n_split;
-                if(stack.wt[stack.np] > 10E-4)
+                // if(stack.wt[stack.np] > 10E-4)
                     photon_split(); 
-                else
-                    photon();
+                // else
+                    // photon();
                 // } else {
                     // stack.np -= 1;
                 // }                 
@@ -3910,7 +3909,7 @@ void photon_split() {
     double x_save, y_save, z_save;
     double u_save, v_save, w_save;
 
-    printf ("Splitting photon into: %d with a weight: %lf \n", n_split, wt_save);
+    // printf ("Splitting photon into: %d with a weight: %lf \n", n_split, wt_save);
 
     x_save = stack.x[np]; u_save = stack.u[np];
     y_save = stack.y[np]; v_save = stack.v[np];
@@ -3930,8 +3929,8 @@ void photon_split() {
 
     double dpmfp_old = 0.0;
 
-    stack.np -= 1;
-    np = stack.np;
+    np -= 1;
+    stack.np = np;
     
     for (iphoton = 1; iphoton <= n_split; iphoton++) {
 
@@ -3940,8 +3939,10 @@ void photon_split() {
         // } else {
         //     stack.np -= 1;
         // }
+        np += 1;
+        stack.np = np;
 
-        printf ("simulating the %d-th photon!\n", iphoton);
+        // printf ("simulating the %d-th photon!\n", iphoton);
 
         irl = irl_save;         // region index
         imed = imed_save;     // medium index of current region
@@ -3956,8 +3957,8 @@ void photon_split() {
             
             /* Deposit energy on the spot */
             ausgab(edep);
-            stack.np -= 1;
-            np = stack.np;
+            np -= 1;
+            stack.np = np;
             continue;
         }
 
@@ -3970,10 +3971,7 @@ void photon_split() {
         
         double dpmfp = -log(eta_split) - dpmfp_old;
         dpmfp_old = dpmfp_old + dpmfp;
-        printf("iphoton: %d dpmfp: %lf \n", iphoton, dpmfp);
-
-        stack.np += 1;
-        np = stack.np;
+        // printf("iphoton: %d dpmfp: %lf \n", iphoton, dpmfp);        
 
         if (np > MXSTACK) {
             printf ("Stack overflow. Aborting the simulation!\n");
@@ -3986,7 +3984,7 @@ void photon_split() {
         stack.z[np] = z_save; stack.w[np] = w_save;
         stack.ir[np] = irl_save;
         stack.wt[np] = wt_save; 
-        stack.e[np] = eig_save;       
+        // stack.e[np] = eig_save; /* this made a big problem!!! */
         
         int lgle = 0;           // index for gamma MFP interpolation
         double gle = log(eig);  /* gle is gamma log energy, here to sample number
@@ -4009,7 +4007,7 @@ void photon_split() {
                                 photon_data.gmfp1, photon_data.gmfp0);
                 
             }
-            printf ("np = %d\n", np);
+            // printf ("np = %d\n", np);
             do {    /* start of "photon transport loop */
                 double tstep;       // distance to a discrete interaction
                 double gmfp = 0.0;  // photon MFP after density scaling
@@ -4047,8 +4045,9 @@ void photon_split() {
                     edep = eig;
                     // printf ("edep: %lf np: %d\n", edep, stack.np);
                     ausgab(edep);
-                    stack.np -= 1;
-                    np = stack.np;
+
+                    np -= 1;
+                    stack.np = np;
                     pmedium = 0;
                     ptrans = 0;
                     // printf ("edep: %lf np: %d\n", edep, stack.np);
@@ -4088,8 +4087,9 @@ void photon_split() {
                     
                     /* Deposit energy on the spot */
                     ausgab(edep);
-                    stack.np -= 1;
-                    np = stack.np;
+
+                    np -= 1;
+                    stack.np = np;
 
                     pmedium = 0;
                     ptrans = 0;
@@ -4127,9 +4127,9 @@ void photon_split() {
         rnno = setRandom();
         if (rnno <= 1.0 - cohfac) {
             /* It was Rayleigh */
-            printf ("RAYLEIGH!\n");
+            // printf ("RAYLEIGH!\n");
             rayleigh(imed, eig, gle, lgle);
-            printf ("Sale rayleigh!\n");
+            // printf ("Sale rayleigh!\n");
         }
         else {
             /* Other interactions */
@@ -4140,11 +4140,11 @@ void photon_split() {
                                 photon_data.gbr11, photon_data.gbr10);
             if (rnno <= gbr1 && eig>2.0*RM) {
                 /* It was pair production */ 
-                printf ("PAIR!\n");          
+                // printf ("PAIR!\n");          
                 pair(imed);
-                printf ("Sale pair!\n");
+                // printf ("Sale pair!\n");
 
-                np = stack.np;                  
+                // np = stack.np;                  
                 if (stack.iq[np] != 0) {
                     /* Electron to be transported next */
                     continue;
@@ -4157,11 +4157,11 @@ void photon_split() {
             
             if (rnno < gbr2) {
                 /* It was compton */   
-                printf ("COMPTON!\n");           
+                // printf ("COMPTON!\n");           
                 compton();  
-                printf ("Sale compton!\n");    
+                // printf ("Sale compton!\n");    
 
-                np = stack.np;            
+                // np = stack.np;            
                 if (stack.iq[np] != 0) {
                     /* Electron to be transported next */
                     continue;
@@ -4169,9 +4169,9 @@ void photon_split() {
             }
             else {
                 /* It was photoelectric */
-                printf ("PHOTOELECTRIC!\n");             
+                // printf ("PHOTOELECTRIC!\n");             
                 photo();
-                printf ("Sale photo!\n"); 
+                // printf ("Sale photo!\n"); 
                 
                 if (stack.iq[np] != 0) {
                     /* Electron to be transported next */
