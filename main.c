@@ -3937,12 +3937,13 @@ void photon_split() {
         np += 1;
         stack.np = np;
 
-        if (rr_rnno <= (1.0/(n_split + 0.0))) {
-            stack.wt[stack.np] *= n_split;
-        } else {
-            stack.np -= 1;
-        }
-        
+        // rr_rnno = setRandom();
+        // if (rr_rnno <= (1.0/(n_split + 0.0))) {
+        //     stack.wt[stack.np] *= n_split;
+        // } else {
+        //     stack.np -= 1;
+        // }
+
         irl = irl_save;         // region index
         imed = imed_save;       // medium index of current region
         edep = edep_save;       // deposited energy by particle
