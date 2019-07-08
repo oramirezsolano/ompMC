@@ -3916,7 +3916,7 @@ void photon_split() {
 
     /* Select photon mean free path */
     double rnno = setRandom();
-    double rr_rnno;
+    // double rr_rnno;     // random number for Russian Roulette
 
     if (rnno < 1.0E-30) {
         rnno = 1.0E-30;
@@ -3931,18 +3931,24 @@ void photon_split() {
     np -= 1;
     stack.np = np;
     
-    // Loop for the photon spliting
+    // Loop for the photon splitting
     for (iphoton = 1; iphoton <= n_split; iphoton++) {
 
         np += 1;
         stack.np = np;
 
+        /* First approach to RR implementation. It does not work yet. */
+        /* Pure Photon Splitting implemented */
         // rr_rnno = setRandom();
-        // if (rr_rnno <= (1.0/(n_split + 0.0))) {
-        //     stack.wt[stack.np] *= n_split;
-        // } else {
-        //     stack.np -= 1;
-        // }
+        // // if(wt < 1.0/(n_split + 0.0)) {
+        //     if (rr_rnno <= (1.0/(n_split + 0.0))) {
+        //         stack.wt[stack.np] *= n_split;
+        //     } else {
+        //         np -= 1;
+        //         stack.np = np;
+        //         continue;
+        //     }
+        // }        
 
         irl = irl_save;         // region index
         imed = imed_save;       // medium index of current region
@@ -4123,8 +4129,7 @@ void photon_split() {
             if (rnno <= gbr1 && eig>2.0*RM) {
                 /* It was pair production */          
                 pair(imed);
-
-                // np = stack.np;                  
+                 
                 if (stack.iq[np] != 0) {
                     /* Electron to be transported next */
                     continue;
@@ -4138,8 +4143,7 @@ void photon_split() {
             if (rnno < gbr2) {
                 /* It was compton */            
                 compton(); 
-
-                // np = stack.np;            
+         
                 if (stack.iq[np] != 0) {
                     /* Electron to be transported next */
                     continue;
