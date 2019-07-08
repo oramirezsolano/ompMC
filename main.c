@@ -3890,6 +3890,7 @@ void photon() {
     return;
 }
 
+/* Function to perform the Photon Splitting technique */
 void photon_split() {
     
     int np = stack.np;                      // stack pointer
@@ -3909,6 +3910,7 @@ void photon_split() {
     double x_save, y_save, z_save;
     double u_save, v_save, w_save;
 
+    /* Saving the state of the photon before splitting */
     wt_save = stack.wt[stack.np]/(n_split + 0.0);
     x_save = stack.x[np]; u_save = stack.u[np];
     y_save = stack.y[np]; v_save = stack.v[np];
@@ -3922,6 +3924,7 @@ void photon_split() {
         rnno = 1.0E-30;
     }
 
+    /* Path length calculation with the same random number for all n-th photon */
     double rnno_split = rnno/(n_split + 0.0);
     double i_split = 1.0/(n_split + 0.0);
     double eta_split = 1 - rnno_split + i_split;
@@ -3939,6 +3942,7 @@ void photon_split() {
 
         /* First approach to RR implementation. It does not work yet. */
         /* Pure Photon Splitting implemented */
+
         // rr_rnno = setRandom();
         // // if(wt < 1.0/(n_split + 0.0)) {
         //     if (rr_rnno <= (1.0/(n_split + 0.0))) {
@@ -3980,6 +3984,7 @@ void photon_split() {
         double dpmfp = -log(eta_split) - dpmfp_old;
         dpmfp_old = dpmfp_old + dpmfp;        
 
+        /* Abort the simulation if the stack is overflowed */
         if (np > MXSTACK) {
             printf ("Stack overflow. Aborting the simulation!\n");
             exit(EXIT_FAILURE);
