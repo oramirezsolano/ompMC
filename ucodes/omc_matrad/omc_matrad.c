@@ -40,9 +40,9 @@
 
 #define exit(EXIT_FAILURE) mexErrMsgIdAndTxt( "matRad:matRad_ompInterface:invalid","Abort.");
 
-/* The ompmc source file is included instead of the header, because of the 
-redefinition of printf function */
-#include "ompmc.c"
+#include "omc_utilities.h"
+#include "ompmc.h"
+#include "omc_random.h"
 
 #include <ctype.h>
 #include <float.h>
@@ -1299,7 +1299,7 @@ void mexFunction (int nlhs, mxArray *plhs[],    // output of the function
     initRegions();
     
     /* Initialize VRT data */
-    initVrtMex();
+    initVrt();
     
     /* Preparation of scoring struct */
     initScore();
